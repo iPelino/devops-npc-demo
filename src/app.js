@@ -1,7 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 
-function createApp() {
+function createApp () {
   const app = express();
   const bootTime = new Date();
 
@@ -11,7 +11,7 @@ function createApp() {
   app.get('/', (req, res) => {
     res.json({
       message: 'DevOps demo application is running',
-      docs: 'Check README.md for usage instructions.',
+      docs: 'Check README.md for usage instructions.'
     });
   });
 
