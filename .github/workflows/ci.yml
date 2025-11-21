@@ -101,43 +101,47 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Import existing resources if present
+        continue-on-error: true
         run: |
-          set +e  # Don't fail on import errors
-
           # Import security group if exists
           SG_ID=$(aws ec2 describe-security-groups \
             --filters "Name=group-name,Values=dev-app-sg" \
             --query 'SecurityGroups[0].GroupId' \
-            --output text 2>/dev/null)
-
-          if [ "$SG_ID" != "" ] && [ "$SG_ID" != "None" ]; then
-            echo "Importing existing security group: $SG_ID"
-            terraform import -input=false aws_security_group.app_sg "$SG_ID" || true
+            --output text 2>/dev/null || echo "")
+          
+          if [ ! -z "$SG_ID" ] && [ "$SG_ID" != "None" ]; then
+            echo "Found existing security group: $SG_ID"
+            terraform import -input=false aws_security_group.app_sg "$SG_ID" 2>&1 || echo "SG import failed or already imported"
+          else
+            echo "No existing security group found"
           fi
-
+          
           # Import IAM role if exists
           if aws iam get-role --role-name dev-ec2-role >/dev/null 2>&1; then
-            echo "Importing existing IAM resources"
-            terraform import -input=false aws_iam_role.ec2_role dev-ec2-role || true
-            terraform import -input=false aws_iam_role_policy_attachment.ssm_policy "dev-ec2-role/arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" || true
-            terraform import -input=false aws_iam_instance_profile.ec2_profile dev-ec2-profile || true
+            echo "Found existing IAM role"
+            terraform import -input=false aws_iam_role.ec2_role dev-ec2-role 2>&1 || echo "Role import failed or already imported"
+            terraform import -input=false aws_iam_role_policy_attachment.ssm_policy "dev-ec2-role/arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" 2>&1 || echo "Policy attachment import failed or already imported"
+            terraform import -input=false aws_iam_instance_profile.ec2_profile dev-ec2-profile 2>&1 || echo "Instance profile import failed or already imported"
+          else
+            echo "No existing IAM role found"
           fi
-
+          
           # Import instance if exists
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=dev-app-server" "Name=instance-state-name,Values=running,stopped,pending" \
             --query 'Reservations[0].Instances[0].InstanceId' \
-            --output text 2>/dev/null)
-
-          if [ "$INSTANCE_ID" != "" ] && [ "$INSTANCE_ID" != "None" ]; then
-            echo "Importing existing instance: $INSTANCE_ID"
-            terraform import -input=false aws_instance.app_server "$INSTANCE_ID" || true
+            --output text 2>/dev/null || echo "")
+          
+          if [ ! -z "$INSTANCE_ID" ] && [ "$INSTANCE_ID" != "None" ]; then
+            echo "Found existing instance: $INSTANCE_ID"
+            terraform import -input=false aws_instance.app_server "$INSTANCE_ID" 2>&1 || echo "Instance import failed or already imported"
+          else
+            echo "No existing instance found"
           fi
-
-          set -e
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
