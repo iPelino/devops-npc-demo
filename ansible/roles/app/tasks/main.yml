@@ -1,0 +1,25 @@
+---
+- name: Log into GitHub Container Registry
+  community.docker.docker_login:
+    registry: ghcr.io
+    username: '{{ github_actor }}'
+    password: '{{ github_token }}'
+    reauthorize: yes
+
+- name: Pull Docker image
+  community.docker.docker_image:
+    name: 'ghcr.io/{{ github_repository }}:latest'
+    source: pull
+    force_source: yes
+
+- name: Run the application container
+  community.docker.docker_container:
+    name: devops-demo-app
+    image: 'ghcr.io/{{ github_repository }}:latest'
+    state: started
+    restart_policy: always
+    ports:
+      - '3000:3000'
+    env:
+      PORT: '3000'
+      APP_VERSION: "{{ app_version | default('latest') }}"

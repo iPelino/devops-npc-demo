@@ -1,0 +1,22 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "extends": [
+    "standard"
+  ],
+  "overrides": [
+    {
+      "files": ["tests/**/*.js"],
+      "env": {
+        "jest": false
+      }
+    }
+  ],
+  "rules": {
+    "semi": ["error", "always"],
+    "comma-dangle": ["error", "never"]
+  }
+}
