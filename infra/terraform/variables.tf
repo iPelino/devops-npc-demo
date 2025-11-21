@@ -17,9 +17,9 @@ variable "instance_type" {
 }
 
 variable "key_name" {
-  description = "Name of the SSH key pair to use"
+  description = "Name of the SSH key pair to use. Must match an existing key pair in AWS EC2. See docs/ssh_setup_guide.md for setup instructions."
   type        = string
-  default     = null # If null, no key pair is assigned (SSM access only)
+  default     = "devops-demo-key" # Change this to your AWS key pair name or set TF_VAR_key_name
 }
 
 variable "allowed_ssh_cidr" {
